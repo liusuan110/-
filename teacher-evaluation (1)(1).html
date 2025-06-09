@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>教评优途 - 大学教师评价系统</title>
+  <!-- 引入 Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入 Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF', // 教育蓝
+            secondary: '#36D399', // 成功绿
+            neutral: {
+              100: '#F9FAFB',
+              200: '#F3F4F6',
+              300: '#E5E7EB',
+              400: '#D1D5DB',
+              500: '#9CA3AF',
+              600: '#6B7280',
+              700: '#4B5563',
+              800: '#1F2937',
+              900: '#111827',
+            },
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'card': '0 4px 20px rgba(0, 0, 0, 0.08)',
+            'hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+          }
+        },
+      }
+    }
+  </script>
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-transition {
+        transition: all 0.3s ease;
+      }
+      .rating-star {
+        transition: transform 0.2s ease;
+      }
+      .rating-star:hover {
+        transform: scale(1.2);
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-neutral-100 text-neutral-800 min-h-screen">
+  <!-- 页面容器 -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- 登录界面 -->
+    <div id="login-page" class="flex flex-col items-center justify-center min-h-screen">
+      <div class="bg-white rounded-2xl shadow-card p-8 max-w-md w-full card-transition">
+        <div class="text-center mb-8">
+          <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-primary">教评优途</h1>
+          <p class="text-neutral-600 mt-2">大学教师评价管理系统</p>
+        </div>
+        
+        <div class="space-y-4">
+          <!-- 登录方式选择 -->
+          <div class="grid grid-cols-3 gap-2 mb-6">
+            <button class="login-method-btn bg-primary/10 hover:bg-primary/20 text-primary py-3 rounded-lg card-transition active">
+              <i class="fa fa-mobile-phone mr-2"></i> 验证码
+            </button>
+            <button class="login-method-btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-3 rounded-lg card-transition">
+              <i class="fa fa-user mr-2"></i> 账号密码
+            </button>
+            <button class="login-method-btn bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-3 rounded-lg card-transition">
+              <i class="fa fa-weixin mr-2"></i> 微信
+            </button>
+          </div>
+          
+          <!-- 验证码登录表单 -->
+          <div class="space-y-4">
+            <div>
+              <label for="phone" class="block text-sm font-medium text-neutral-700 mb-1">手机号</label>
+              <input type="tel" id="phone" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none card-transition" placeholder="请输入手机号">
+            </div>
+            <div class="flex">
+              <div class="flex-1 mr-2">
+                <label for="code" class="block text-sm font-medium text-neutral-700 mb-1">验证码</label>
+                <input type="text" id="code" class="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none card-transition" placeholder="请输入验证码">
+              </div>
+              <div class="flex items-end">
+                <button id="get-code" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 card-transition whitespace-nowrap">
+                  获取验证码
+                </button>
+              </div>
+            </div>
+            <button id="login-btn" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-primary/90 font-medium card-transition">
+              登录
+            </button>
+          </div>
+          
+          <div class="flex justify-between text-sm mt-4">
+            <a href="#" class="text-neutral-600 hover:text-primary card-transition">忘记密码？</a>
+            <a href="#" class="text-neutral-600 hover:text-primary card-transition">立即注册</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-8 text-neutral-500 text-sm">
+        <p>© 2025 教评优途 - 大学教师评价管理系统</p>
+      </div>
+    </div>
+    
+    <!-- 主应用界面 (默认隐藏) -->
+    <div id="app" class="hidden">
+      <!-- 顶部导航栏 -->
+      <header class="bg-white rounded-xl shadow-card p-4 mb-6 flex items-center justify-between">
+        <div class="flex items-center">
+          <div class="text-primary font-bold text-xl mr-8">教评优途</div>
+          <nav class="hidden md:flex space-x-6">
+            <a href="#" class="text-primary font-medium">首页</a>
+            <a href="#" class="text-neutral-600 hover:text-primary card-transition">评价管理</a>
+            <a href="#" class="text-neutral-600 hover:text-primary card-transition">数据统计</a>
+            <a href="#" class="text-neutral-600 hover:text-primary card-transition">学术发展</a>
+          </nav>
+        </div>
+        <div class="flex items-center">
+          <div class="relative mr-4">
+            <input type="text" placeholder="搜索..." class="pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none card-transition">
+            <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"></i>
+          </div>
+          <div class="flex items-center">
+            <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-2">
+              <i class="fa fa-user"></i>
+            </div>
+            <div class="hidden md:block">
+              <div class="text-sm font-medium">陈教授</div>
+              <div class="text-xs text-neutral-500">计算机科学与技术学院</div>
+            </div>
+            <button class="ml-4 text-neutral-500 hover:text-neutral-700 card-transition">
+              <i class="fa fa-bell"></i>
+            </button>
+          </div>
+        </div>
+      </header>
+      
+      <!-- 内容区域 -->
+      <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- 左侧边栏 - 移动端隐藏 -->
+        <aside class="hidden lg:block bg-white rounded-xl shadow-card p-6">
+          <div class="space-y-6">
+            <div>
+              <h3 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-4">功能导航</h3>
+              <nav class="space-y-2">
+                <a href="#" class="flex items-center px-4 py-2 rounded-lg bg-primary/10 text-primary font-medium">
+                  <i class="fa fa-home w-5 text-center mr-3"></i> 首页概览
+                </a>
+                <a href="#" class="flex items-center px-4 py-2 rounded-lg text-neutral-700 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-list-alt w-5 text-center mr-3"></i> 评价任务
+                </a>
+                <a href="#" class="flex items-center px-4 py-2 rounded-lg text-neutral-700 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-bar-chart w-5 text-center mr-3"></i> 评价结果
+                </a>
+                <a href="#" class="flex items-center px-4 py-2 rounded-lg text-neutral-700 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-book w-5 text-center mr-3"></i> 学术研究
+                </a>
+                <a href="#" class="flex items-center px-4 py-2 rounded-lg text-neutral-700 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-users w-5 text-center mr-3"></i> 研究生指导
+                </a>
+                <a href="#" class="flex items-center px-4 py-2 rounded-lg text-neutral-700 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-cog w-5 text-center mr-3"></i> 个人设置
+                </a>
+              </nav>
+            </div>
+            
+            <div>
+              <h3 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-4">快速入口</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <a href="#" class="flex flex-col items-center justify-center p-3 rounded-lg bg-neutral-50 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-calendar-check-o text-primary text-xl mb-2"></i>
+                  <span class="text-sm text-neutral-700">待评价</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center p-3 rounded-lg bg-neutral-50 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-history text-primary text-xl mb-2"></i>
+                  <span class="text-sm text-neutral-700">历史评价</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center p-3 rounded-lg bg-neutral-50 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-line-chart text-primary text-xl mb-2"></i>
+                  <span class="text-sm text-neutral-700">学术趋势</span>
+                </a>
+                <a href="#" class="flex flex-col items-center justify-center p-3 rounded-lg bg-neutral-50 hover:bg-neutral-100 card-transition">
+                  <i class="fa fa-question-circle text-primary text-xl mb-2"></i>
+                  <span class="text-sm text-neutral-700">帮助中心</span>
+                </a>
+              </div>
+            </div>
+            
+            <div>
+              <h3 class="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-4">学院公告</h3>
+              <div class="space-y-3">
+                <div class="p-3 rounded-lg bg-neutral-50 border-l-4 border-primary">
+                  <div class="text-sm font-medium text-neutral-800">2025年度国家自然科学基金申报通知</div>
+                  <div class="text-xs text-neutral-500 mt-1">截止日期：2025-07-15</div>
+                </div>
+                <div class="p-3 rounded-lg bg-neutral-50 border-l-4 border-secondary">
+                  <div class="text-sm font-medium text-neutral-800">计算机学院教学成果奖申报</div>
+                  <div class="text-xs text-neutral-500 mt-1">查看详情 >></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+        
+        <!-- 主内容区域 -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- 欢迎卡片 -->
+          <div class="bg-gradient-to-r from-primary to-primary/80 rounded-xl shadow-card p-6 text-white">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+              <div>
+                <h2 class="text-2xl font-bold mb-2">欢迎回来，陈教授</h2>
+                <p class="text-white/80">您有 <span class="font-semibold">3</span> 个待评价任务和 <span class="font-semibold">2</span> 条新通知</p>
+              </div>
+              <div class="mt-4 md:mt-0">
+                <button class="bg-white text-primary px-6 py-2 rounded-lg font-medium hover:bg-neutral-100 card-transition">
+                  开始评价
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 评价结果概览 -->
+          <div class="bg-white rounded-xl shadow-card p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-lg font-semibold">评价结果概览</h3>
+              <div class="flex space-x-2">
+                <button class="text-sm text-primary font-medium">
+                  <i class="fa fa-calendar mr-1"></i> 本学年
+                </button>
+                <button class="text-sm text-neutral-600 hover:text-primary card-transition">
+                  <i class="fa fa-refresh mr-1"></i> 刷新
+                </button>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- 雷达图 -->
+              <div>
+                <h4 class="text-sm font-medium text-neutral-600 mb-3">教学能力评分</h4>
+                <div class="h-64">
+                  <canvas id="radarChart"></canvas>
+                </div>
+              </div>
+              
+              <!-- 趋势图 -->
+              <div>
+                <h4 class="text-sm font-medium text-neutral-600 mb-3">评分趋势</h4>
+                <div class="h-64">
+                  <canvas id="lineChart"></canvas>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 学术成果 -->
+            <div class="mt-8">
+              <h4 class="text-sm font-semibold text-neutral-700 mb-4">学术成果指标</h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-neutral-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-primary mb-1">4</div>
+                  <div class="text-sm text-neutral-600">SCI论文</div>
+                </div>
+                <div class="bg-neutral-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-primary mb-1">2</div>
+                  <div class="text-sm text-neutral-600">科研项目</div>
+                </div>
+                <div class="bg-neutral-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-primary mb-1">12</div>
+                  <div class="text-sm text-neutral-600">指导研究生</div>
+                </div>
+                <div class="bg-neutral-50 rounded-lg p-4 text-center">
+                  <div class="text-2xl font-bold text-primary mb-1">98%</div>
+                  <div class="text-sm text-neutral-600">论文录用率</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 最近评价任务 -->
+          <div class="bg-white rounded-xl shadow-card p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-lg font-semibold">最近评价任务</h3>
+              <a href="#" class="text-primary text-sm hover:underline card-transition">查看全部</a>
+            </div>
+            
+            <div class="space-y-4">
+              <!-- 评价任务卡片 -->
+              <div class="border border-neutral-200 rounded-lg p-4 hover:shadow-hover card-transition">
+                <div class="flex justify-between">
+                  <div>
+                    <h4 class="font-medium">2025年春季学期博士生开题报告评审</h4>
+                    <p class="text-sm text-neutral-600 mt-1">计算机科学与技术学院</p>
+                  </div>
+                  <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">进行中</span>
+                </div>
+                <div class="mt-3 flex justify-between items-center">
+                  <div class="text-sm text-neutral-500">
+                    <i class="fa fa-calendar-o mr-1"></i> 截止日期: 2025-06-20
+                  </div>
+                  <button class="bg-primary text-white px-4 py-1.5 rounded-lg text-sm hover:bg-primary/90 card-transition">
+                    立即评价
+                  </button>
+                </div>
+              </div>
+              
+              <div class="border border-neutral-200 rounded-lg p-4 hover:shadow-hover card-transition">
+                <div class="flex justify-between">
+                  <div>
+                    <h4 class="font-medium">国家重点实验室评估专家评审</h4>
+                    <p class="text-sm text-neutral-600 mt-1">人工智能与机器学习方向</p>
+                  </div>
+                  <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">已完成</span>
+                </div>
+                <div class="mt-3 flex justify-between items-center">
+                  <div class="text-sm text-neutral-500">
+                    <i class="fa fa-calendar-check-o mr-1"></i> 完成日期: 2025-05-25
+                  </div>
+                  <button class="bg-neutral-200 text-neutral-700 px-4 py-1.5 rounded-lg text-sm hover:bg-neutral-300 card-transition">
+                    查看详情
+                  </button>
+                </div>
+              </div>
+              
+              <div class="border border-neutral-200 rounded-lg p-4 hover:shadow-hover card-transition">
+                <div class="flex justify-between">
+                  <div>
+                    <h4 class="font-medium">本科生毕业论文指导评价</h4>
+                    <p class="text-sm text-neutral-600 mt-1">计算机科学与技术专业</p>
+                  </div>
+                  <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">待开始</span>
+                </div>
+                <div class="mt-3 flex justify-between items-center">
+                  <div class="text-sm text-neutral-500">
+                    <i class="fa fa-calendar-o mr-1"></i> 开始日期: 2025-06-15
+                  </div>
+                  <button class="bg-neutral-200 text-neutral-700 px-4 py-1.5 rounded-lg text-sm cursor-not-allowed">
+                    未开始
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 学术建议 -->
+          <div class="bg-white rounded-xl shadow-card p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-lg font-semibold">学术发展建议</h3>
+              <div class="text-sm text-neutral-500">基于您的研究方向和成果</div>
+            </div>
+            
+            <div class="space-y-4">
+              <div class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-lg">
+                <div class="flex items-start">
+                  <div class="text-blue-500 mr-3 mt-1">
+                    <i class="fa fa-lightbulb-o"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium">跨学科研究合作</h4>
+                    <p class="text-sm text-neutral-700 mt-1">根据您在人工智能领域的研究，建议与医学院或经管学院开展跨学科合作，探索AI在医疗影像分析或金融风控中的应用。</p>
+                    <div class="mt-3">
+                      <a href="#" class="text-primary text-sm hover:underline card-transition">查看潜在合作项目 <i class="fa fa-angle-right ml-1"></i></a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="border-l-4 border-purple-500 bg-purple-50 p-4 rounded-r-lg">
+                <div class="flex items-start">
+                  <div class="text-purple-500 mr-3 mt-1">
+                    <i class="fa fa-globe"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-medium">国际学术会议参与</h4>
+                    <p class="text-sm text-neutral-700 mt-1">2025年AI顶级会议NeurIPS将于12月在加拿大举行，建议提交论文并参与，拓展国际学术影响力。</p>
+                    <div class="mt-3">
+                      <a href="#" class="text-primary text-sm hover:underline card-transition">查看会议详情 <i class="fa fa-angle-right ml-1"></i></a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    // 登录功能模拟
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginBtn = document.getElementById('login-btn');
+      const loginPage = document.getElementById('login-page');
+      const app = document.getElementById('app');
+      
+      loginBtn.addEventListener('click', function() {
+        // 模拟登录验证
+        const phoneInput = document.getElementById('phone');
+        const codeInput = document.getElementById('code');
+        
+        if (phoneInput.value && codeInput.value) {
+          loginPage.classList.add('hidden');
+          app.classList.remove('hidden');
+          initCharts();
+        } else {
+          alert('请输入手机号和验证码');
+        }
+      });
+      
+      // 验证码倒计时
+      const getCodeBtn = document.getElementById('get-code');
+      let countdown = 60;
+      
+      getCodeBtn.addEventListener('click', function() {
+        const phoneInput = document.getElementById('phone');
+        
+        if (!phoneInput.value) {
+          alert('请输入手机号');
+          return;
+        }
+        
+        getCodeBtn.disabled = true;
+        getCodeBtn.textContent = `重新获取(${countdown}s)`;
+        
+        const timer = setInterval(() => {
+          countdown--;
+          getCodeBtn.textContent = `重新获取(${countdown}s)`;
+          
+          if (countdown <= 0) {
+            clearInterval(timer);
+            getCodeBtn.disabled = false;
+            getCodeBtn.textContent = '获取验证码';
+            countdown = 60;
+          }
+        }, 1000);
+      });
+    });
+    
+    // 初始化图表
+    function initCharts() {
+      // 雷达图 - 教学能力评分
+      const radarCtx = document.getElementById('radarChart').getContext('2d');
+      new Chart(radarCtx, {
+        type: 'radar',
+        data: {
+          labels: ['教学方法', '学术指导', '研究能力', '论文指导', '学术影响力', '学生管理'],
+          datasets: [{
+            label: '当前评分',
+            data: [4.5, 4.7, 4.9, 4.8, 4.6, 4.2],
+            backgroundColor: 'rgba(22, 93, 255, 0.2)',
+            borderColor: 'rgba(22, 93, 255, 1)',
+            pointBackgroundColor: 'rgba(22, 93, 255, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(22, 93, 255, 1)'
+          }, {
+            label: '学院平均',
+            data: [3.8, 3.9, 4.1, 3.7, 3.5, 3.9],
+            backgroundColor: 'rgba(54, 211, 153, 0.2)',
+            borderColor: 'rgba(54, 211, 153, 1)',
+            pointBackgroundColor: 'rgba(54, 211, 153, 1)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgba(54, 211, 153, 1)'
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              angleLines: {
+                display: true
+              },
+              suggestedMin: 0,
+              suggestedMax: 5
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+      
+      // 折线图 - 评分趋势
+      const lineCtx = document.getElementById('lineChart').getContext('2d');
+      new Chart(lineCtx, {
+        type: 'line',
+        data: {
+          labels: ['2021', '2022', '2023', '2024', '2025'],
+          datasets: [{
+            label: '总体评分',
+            data: [3.9, 4.1, 4.3, 4.5, 4.7],
+            borderColor: 'rgba(22, 93, 255, 1)',
+            backgroundColor: 'rgba(22, 93, 255, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              min: 3,
+              max: 5,
+              ticks: {
+                stepSize: 0.5
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
+    
